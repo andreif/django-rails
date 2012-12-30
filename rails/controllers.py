@@ -204,11 +204,14 @@ class BaseController(View):
         self._current_action = action
         self.cx.current_action = action
 
-    def _redirect(self, to='/', params=None):
+    def _redirect(self, to='/', params=None, obj=None):
         if to == ':back':
             url = self.rq.request.META['HTTP_REFERER']
         else:
             url = self.router.reverse(to)
+            if obj:
+                params = params or {}
+                params['id'] = obj.id
             if isinstance(params, dict):
                 url += '?' + urllib.urlencode(params)
             elif params and hasattr(params, 'id'):
@@ -249,7 +252,7 @@ class BaseController(View):
         return http.HttpResponse(status=status)
 
     def render(self, action):
-        self.cx.update(action_template=action)
+        self.cx.update(action_template=action.replace('#', ''))
 
     @classmethod
     def _controller_name(cls):
