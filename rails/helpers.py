@@ -20,6 +20,9 @@ def url_to(resource, action=None, **params):
                 if action and not isinstance(action, basestring):
                     params['id'] = str(action.id)
                 if params:
+                    for k, v in params.iteritems():
+                        if isinstance(v, unicode):
+                            params[k] = v.encode('utf8')
                     extra = '?' + urllib.urlencode(params)
             else:
                 resource_name = resource[:-1]
