@@ -1,5 +1,6 @@
 # coding=utf-8
 import logging
+import re
 from django.conf import settings
 from django.template import TemplateDoesNotExist
 from django.template.loader import find_template_loader
@@ -47,3 +48,7 @@ def make_data_dict(data):
         set_dic(dic, k.split('-'), v)
 
     return dic
+
+
+def to_underscore(camelcase):
+    return re.sub(r'(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))', r'_\1', camelcase).lower().strip('_')

@@ -29,10 +29,11 @@ def url_to(resource, action=None, **params):
                 action = action or 'index'
                 name = '%s.%s' % (resource_name, action)
         else:
-            resource_name = resource.__class__.__name__.lower()
+            from . import utils
+            resource_name = utils.to_underscore(resource.__class__.__name__)
             action = action or 'show'
             extra = '?' + urllib.urlencode(dict(id=resource.id))
-            name = '%s.%s' % (resource_name, action)
+            name = '%s.%s' % (resource_name, action.replace('#', ''))
         return reverse(name) + extra
     except Exception as e:
         logging.error('Failed rendering url_to tag: %r', e)
