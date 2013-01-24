@@ -227,6 +227,34 @@ class BaseController(View):
             template_name = '%s%s/%s' % (self.template_name_prefix, self._controller_name(), name)
         return self.renderer.find_template(template_name)
 
+    def _setup_render(self):
+        """
+          = builtin.str(1)
+          = import.re.sub('1', '2', '1')
+        """
+        if not self.rq.is_staff():
+            return self._redirect('/admin')
+
+        import __builtin__
+        self.cx.builtin = __builtin__
+        self.cx.bi = __builtin__
+
+        #def _import(item, frm=None):
+        #    return __import__(item)
+
+        class imp(object):
+            def __getattribute__(self, item):
+                return __import__(item)
+        self.cx['import'] = imp()
+        self.cx.imp = imp()
+
+        from rails import helpers
+        helpers
+
+#        id = self.rq.data('id')
+#        if id:
+#            self.cx.activation = DigitalActivation.objects.get(id=id)
+
     def _before_render(self):
         pass
 
@@ -238,6 +266,7 @@ class BaseController(View):
             title='%s | %s' % (self._controller_name(), name)
         )
         if name in self._actions():
+            self._setup_render()
             response = self._before_render() or getattr(self, name)()
             if isinstance(response, http.HttpResponse):
                 return response
