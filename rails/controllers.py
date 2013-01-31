@@ -174,9 +174,9 @@ class Router(object):
         #urlconf_module = collections.namedtuple('urlconf_module', 'urlpatterns')
         #return urlconf_module(urlpatterns = patterns('', *routes)), 'x', ''
 
-    def get_view(self, name, *args, **kwargs):
+    def get_view(self, name):
         def view(request, *args, **kwargs):
-            return self.controller_class(request, name)._render(args=args, kwargs=kwargs)
+            return self.controller_class(request, name)._render(kwargs=kwargs)  # args=kwargs,
         return view
 
     def get_route(self, name, regex=None):
@@ -186,13 +186,13 @@ class Router(object):
             name='%s.%s' % (self.controller_name, name),
         )
 
-    def reverse(self, url):
+    def reverse(self, url, args, kwargs):
         if '/' not in url:
             if url.startswith('.'):
                 url = self.controller_name + url
             elif url.startswith('#'):
                 url = self.controller_name + '.' + url[1:]
-            url = reverse(url)
+            url = reverse(url, args=args, kwargs=kwargs)
         return url
 
 
@@ -248,7 +248,7 @@ class BaseController(View):
         else:
             if to.startswith('#'):
                 to = self._controller_name() + '.' + to[1:]
-            url = self.router.reverse(to)
+            url = self.router.reverse(to, args=self.route_args, kwargs=self.route_kwargs)
             if obj:
                 params = params or {}
                 params['id'] = obj.id
@@ -302,8 +302,8 @@ class BaseController(View):
         if name and name.startswith('#'):
             name = name[1:]
 
-        self.route_args = self.route_args or args
-        self.route_kwargs = self.route_kwargs or kwargs
+        self.route_args = self.route_args or args or ()
+        self.route_kwargs = self.route_kwargs or kwargs or {}
 
         name = name or self._current_action
         self.cx(
@@ -311,7 +311,6 @@ class BaseController(View):
             current_controller=self._controller_name(),
             title='%s | %s' % (self._controller_name(), name)
         )
-        print name, self._actions()
         if name in self._actions():
             self._setup_render()
             response = self._before_render() or getattr(self, name)()
