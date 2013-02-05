@@ -24,7 +24,6 @@ import json
 from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
 from django import http
-from django.template import TemplateDoesNotExist
 from django.views.generic import View
 import urllib
 import re
@@ -209,13 +208,16 @@ class Renderer(object):
         return render_to_response(template_name, self.controller.cx, RequestContext(self.controller.rq.request))
 
     def find_template(self, template_name):
+        from django.template import TemplateDoesNotExist
         for ext in self.allowed_extensions:
             try:
                 utils.load_template_source(template_name + '.' + ext)
                 return template_name + '.' + ext
             except TemplateDoesNotExist:
                 continue
-        raise TemplateDoesNotExist(template_name + '.%s' % str(self.allowed_extensions))
+        class TemplateDoesNotExist(Exception):  # standard exc fails due to missing traceback
+            pass
+        raise TemplateDoesNotExist(template_name + '.(%s)' % ', '.join(self.allowed_extensions))
 
 
 class Inspector(object):
@@ -272,9 +274,6 @@ class BaseController(View):
           = builtin.str(1)
           = import.re.sub('1', '2', '1')
         """
-        if not self.rq.is_staff():
-            return self._redirect('/admin')
-
         import __builtin__
         self.cx.builtin = __builtin__
         self.cx.bi = __builtin__
@@ -296,7 +295,8 @@ class BaseController(View):
 #            self.cx.activation = DigitalActivation.objects.get(id=id)
 
     def _before_render(self):
-        pass
+        if getattr(self, 'staff_required', False) and not self.rq.is_staff():
+            return self._redirect('/admin')
 
     def _render(self, name=None, args=None, kwargs=None):
         if name and name.startswith('#'):
