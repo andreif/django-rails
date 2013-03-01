@@ -37,6 +37,7 @@ def action(*args, **kwargs):
         def wrapper(*args, **kwargs):
             return fn(*args, **kwargs)
         wrapper.responds_to = (None if func else args) or ['get', 'post']
+        wrapper.url = kwargs.get('url')
         return wrapper
     if func:
         return decorator(func)
@@ -179,8 +180,10 @@ class Router(object):
         return view
 
     def get_route(self, name, regex=None):
+        u = getattr(getattr(self.controller_class, name), 'url')
+        u = u or r'%s(\.[a-z]+)?/?$' % name.replace('_', '-')
         return url(
-            regex or r'^%s%s(\.[a-z]+)?/?$' % (self.prefix or '', name.replace('_', '-')),
+            regex or r'^%s%s' % (self.prefix or '', u),
             self.get_view(name),
             name='%s.%s' % (self.controller_name, name),
         )
