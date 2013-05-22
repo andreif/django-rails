@@ -180,7 +180,7 @@ class Router(object):
         return view
 
     def get_route(self, name, regex=None):
-        u = getattr(getattr(self.controller_class, name), 'url')
+        u = getattr(getattr(self.controller_class, name, None), 'url', None)
         u = u or r'%s(\.[a-z]+)?/?$' % name.replace('_', '-')
         return url(
             regex or r'^%s%s' % (self.prefix or '', u),
@@ -289,6 +289,18 @@ class BaseController(View):
                 return __import__(item)
         self.cx['import'] = imp()
         self.cx.imp = imp()
+
+        def include_raw(path):
+            import inspect
+            from os.path import dirname, join
+            import jinja2
+            try:
+                fp = join(dirname(inspect.currentframe().f_back.f_back.f_code.co_filename), path)
+                s = open(fp).read().decode('utf-8')
+                return jinja2.Markup(s)
+            except Exception:
+                pass
+        self.cx.include_raw = include_raw
 
         from rails import helpers
         helpers
