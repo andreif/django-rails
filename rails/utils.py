@@ -1,5 +1,4 @@
 # coding=utf-8
-import logging
 import re
 from django.conf import settings
 from django.template import TemplateDoesNotExist
@@ -52,3 +51,37 @@ def make_data_dict(data):
 
 def to_underscore(camelcase):
     return re.sub(r'(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))', r'_\1', camelcase).lower().strip('_')
+
+
+try:
+    from django.contrib.markup.templatetags.markup import markdown
+except ImportError:
+    markdown = lambda x: x
+
+
+try:
+    from django.utils.html import urlize
+except ImportError:
+    urlize = lambda x: x
+
+
+def markdown_urlize(node):
+    return markdown(urlize(node)).replace('href="www.', 'href="http://www.')
+
+
+def remove_indent(text):
+    lines = text.split('\n')
+    min_indent = None
+    for i in range(0, len(lines)):
+        if re.match(r'^\s*$', lines[i]):
+            lines[i] = ''
+        else:
+            m = re.search(r'^(\s+)', lines[i])
+            if m:
+                if min_indent is None or len(m.group(0)) < min_indent:
+                    min_indent = len(m.group(0))
+    if min_indent:
+        for i in range(1, len(lines) - 1):
+            if lines[i].startswith(' ' * min_indent):
+                lines[i] = lines[i][min_indent:]
+    return '\n'.join(lines).strip()

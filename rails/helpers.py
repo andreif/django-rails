@@ -37,3 +37,10 @@ def url_to(resource, action=None, **params):
         return reverse(name) + extra
     except Exception as e:
         logging.error('Failed rendering url_to tag: %r', e)
+
+
+@helper
+def markdown(text):
+    import jinja2
+    from .utils import markdown_urlize
+    return jinja2.Markup(markdown_urlize(text))
