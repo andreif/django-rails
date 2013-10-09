@@ -181,7 +181,7 @@ class Router(object):
 
     def get_route(self, name, regex=None):
         u = getattr(getattr(self.controller_class, name, None), 'url', None)
-        u = u or r'%s(\.[a-z]+)?/?$' % name.replace('_', '-')
+        u = u or r'%s(\.[a-z]+)?/?$' % name.replace('__', '/').replace('_', '-')
         return url(
             regex or r'^%s%s' % (self.prefix or '', u),
             self.get_view(name),
@@ -269,6 +269,7 @@ class BaseController(View):
             template_name = name
         else:
             name = name or self._current_action
+            name = name.replace('__', '/')
             template_name = '%s%s/%s' % (self.template_name_prefix, self._controller_name(), name)
         return self.renderer.find_template(template_name)
 
@@ -350,7 +351,8 @@ class BaseController(View):
 
     @classmethod
     def _is_action(cls, name):
-        return not name.startswith('_') and hasattr(getattr(cls, name), 'responds_to')
+        return not name.startswith('_') and (hasattr(getattr(cls, name), 'responds_to') or
+                                             getattr(cls, 'has_simple_actions', False))
 
     @classmethod
     def _actions(cls):
