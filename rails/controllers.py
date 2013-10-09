@@ -229,6 +229,10 @@ class Inspector(object):
         self.controller_class = controller_class
 
 
+class ResponseError(Exception):
+    pass
+
+
 class BaseController(View):
 
     simple_actions = []
@@ -329,12 +333,18 @@ class BaseController(View):
         )
         if name in self._actions():
             self._setup_render()
-            response = self._before_render() or getattr(self, name)()
+            try:
+                response = self._before_render() or getattr(self, name)()
+            except ResponseError as e:
+                return e.message
             if isinstance(response, http.HttpResponse):
                 return response
         elif name not in self.simple_actions:
             return http.HttpResponseNotFound('Unknown route')
         return self.renderer.render_to_response(self._template(name))
+
+    def abort(self, response):
+        raise ResponseError(response)
 
     def _render_json(self, data):
         return http.HttpResponse(json.dumps(data), mimetype='application/json')
