@@ -1,25 +1,4 @@
 # coding=utf-8
-"""
-urlpatterns = patterns('',
-    (r'^accounts', AccountsController.routes()),
-)
-
-class AccountsController(BaseController):
-    simple_actions = 'index profile'.split()
-
-    @action('get', 'post', 'put', 'delete', 'patch') # CRUD - create, read, update, delete
-    def login(self):
-        if self._is_authenticated():
-            return self._redirect(to='.index')
-        if self._request.POST.get('remember_me'):
-            self._request.session.set_expiry(365*24*60*60) # 1 year
-        return self._auth_proxy(authentication_form=AccountLoginForm)
-
-    @action
-    def logout(self):
-        return self._auth_proxy(next_page=self._reverse('.login'))
-
-"""
 import json
 from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
@@ -307,8 +286,7 @@ class BaseController(View):
                 pass
         self.cx.include_raw = include_raw
 
-        from rails import helpers
-        helpers
+        __import__('rails.helpers')  # register helpers
 
 #        id = self.rq.data('id')
 #        if id:
