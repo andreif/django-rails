@@ -176,7 +176,7 @@ class Router(object):
 
     def get_view(self, name):
         def view(request, *args, **kwargs):
-            return self.controller_class(request, name)._render(kwargs=kwargs)  # args=kwargs,
+            return self.controller_class(request, name)._render(args=args, kwargs=kwargs)
         return view
 
     def get_route(self, name, regex=None):
@@ -323,6 +323,7 @@ class BaseController(View):
             name = name[1:]
 
         self.route_args = self.route_args or args or ()
+        self.route_args = [a or '' for a in self.route_args]
         self.route_kwargs = self.route_kwargs or kwargs or {}
 
         name = name or self._current_action
